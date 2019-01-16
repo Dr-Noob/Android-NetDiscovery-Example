@@ -12,16 +12,25 @@ import static android.net.nsd.NsdManager.FAILURE_MAX_LIMIT;
 public class Discovery {
     private static Discovery onlyInstance = new Discovery();
     private static Context ctx;
-    private static NsdManager mNsdManager;
-    private static boolean discoverEnabled;
 
-    private static final String SERVICE_NAME = "NsdChat";
-    private static final String SERVICE_TYPE = "_http._tcp.";
+    private static String SERVICE_NAME        = "NsdChat";
+    private static final String SERVICE_TYPE  = "_http._tcp.";
     private static final String DISCOVERY_TAG = "DISCOVERY";
+    private static final int SERVICE_PORT     = 2100;
+
+    private static boolean discoverServiceUp;
+    private static boolean registerServiceUp;
+
+    private static NsdManager mNsdManager;
+    private static NsdManager.RegistrationListener mRegistrationListener;
+    private static NsdManager.DiscoveryListener mDiscoveryListener;
 
     private Discovery() {
-        discoverEnabled = false;
+        discoverServiceUp = false;
+        registerServiceUp = false;
     }
+
+    /* PUBLIC METHODS */
 
     public static Discovery getOnlyInstance(Context newCtx) {
         if(ctx == null) {
@@ -32,32 +41,65 @@ public class Discovery {
     }
 
     public boolean register() {
-        registerService(2100);
+        registerService(SERVICE_PORT);
         return true;
     }
 
-    public boolean discover() {
-        if(!discoverEnabled) {
-            initializeDiscoveryListener();
-            return true;
-        }
-        return false;
+    public boolean unregister() {
+        unregisterService();
+        return true;
+    }
+
+    public boolean startDiscover() {
+        startDiscovery();
+        return true;
+    }
+
+    public boolean stopDiscover() {
+        stopDiscovery();
+        return true;
+    }
+
+    public boolean discoverServiceUp() { return discoverServiceUp; }
+    public boolean registerServiceUp() { return registerServiceUp; }
+
+    /* PRIVATE METHODS */
+
+    /* REGISTER METHODS */
+
+    private void unregisterService() {
+        registerServiceUp = false;
+        mNsdManager.unregisterService(mRegistrationListener);
     }
 
     private void registerService(int port) {
-        NsdManager.RegistrationListener mRegistrationListener = new NsdManager.RegistrationListener() {
+        registerServiceUp = true;
+
+        mRegistrationListener = new NsdManager.RegistrationListener() {
 
             @Override
             public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) {
-                // Save the service name. Android may have changed it in order to
-                // resolve a conflict, so update the name you initially requested
-                // with the name Android actually used.
-                String mServiceName = NsdServiceInfo.getServiceName();
+                //Android may have changed it!
+                SERVICE_NAME = NsdServiceInfo.getServiceName();
             }
 
             @Override
             public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                // Registration failed! Put debugging code here to determine why.
+                Log.e(DISCOVERY_TAG, "Registration failed: ");
+                switch (errorCode) {
+                    case FAILURE_ALREADY_ACTIVE:
+                        Log.e(DISCOVERY_TAG, "Operation is already active");
+                        break;
+                    case FAILURE_INTERNAL_ERROR:
+                        Log.e(DISCOVERY_TAG, "NSD internal error");
+                        break;
+                    case FAILURE_MAX_LIMIT:
+                        Log.e(DISCOVERY_TAG, "The maximum outstanding requests from the applications have reached");
+                        break;
+                    default:
+                        Log.e(DISCOVERY_TAG, "Unknown error code");
+                        break;
+                }
             }
 
             @Override
@@ -68,7 +110,21 @@ public class Discovery {
 
             @Override
             public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                // Unregistration failed. Put debugging code here to determine why.
+                Log.e(DISCOVERY_TAG, "Unregistration failed: ");
+                switch (errorCode) {
+                    case FAILURE_ALREADY_ACTIVE:
+                        Log.e(DISCOVERY_TAG, "Operation is already active");
+                        break;
+                    case FAILURE_INTERNAL_ERROR:
+                        Log.e(DISCOVERY_TAG, "NSD internal error");
+                        break;
+                    case FAILURE_MAX_LIMIT:
+                        Log.e(DISCOVERY_TAG, "The maximum outstanding requests from the applications have reached");
+                        break;
+                    default:
+                        Log.e(DISCOVERY_TAG, "Unknown error code");
+                        break;
+                }
             }
         };
 
@@ -77,16 +133,21 @@ public class Discovery {
         serviceInfo.setServiceType(SERVICE_TYPE);
         serviceInfo.setPort(port);
 
-        this.mNsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
+        mNsdManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
     }
 
-    public void initializeDiscoveryListener() {
-        discoverEnabled = true;
+    /* DISCOVERY METHODS */
 
-        // Instantiate a new DiscoveryListener
-        NsdManager.DiscoveryListener mDiscoveryListener = new NsdManager.DiscoveryListener() {
+    private void stopDiscovery() {
+        discoverServiceUp = false;
+        mNsdManager.stopServiceDiscovery(mDiscoveryListener);
+    }
 
-            // Called as soon as service discovery begins.
+    private void startDiscovery() {
+        discoverServiceUp = true;
+
+        mDiscoveryListener = new NsdManager.DiscoveryListener() {
+
             @Override
             public void onDiscoveryStarted(String regType) {
                 Log.d(DISCOVERY_TAG, "Service discovery started");
@@ -94,24 +155,17 @@ public class Discovery {
 
             @Override
             public void onServiceFound(NsdServiceInfo service) {
-                // A service was found! Do something with it.
-                Log.d(DISCOVERY_TAG, "Service discovery success" + service);
+                Log.d(DISCOVERY_TAG, "Service discovery success: " + service);
                 if (!service.getServiceType().equals(SERVICE_TYPE)) {
-                    // Service type is the string containing the protocol and
-                    // transport layer for this service.
                     Log.d(DISCOVERY_TAG, "Unknown Service Type: " + service.getServiceType());
                 } else if (service.getServiceName().equals(SERVICE_NAME)) {
-                    // The name of the service tells the user what they'd be
-                    // connecting to. It could be "Bob's Chat App".
                     Log.d(DISCOVERY_TAG, "Same machine: " + SERVICE_NAME);
                 }
-                initializeResolveListener(service);
+                resolve(service);
             }
 
             @Override
             public void onServiceLost(NsdServiceInfo service) {
-                // When the network service is no longer available.
-                // Internal bookkeeping code goes here.
                 Log.e(DISCOVERY_TAG, "service lost: " + service);
             }
 
@@ -133,16 +187,16 @@ public class Discovery {
             }
         };
 
+        // This call launches the previously defined (mDiscoveryListener) listener
         mNsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
     }
 
-    public static synchronized void initializeResolveListener(NsdServiceInfo service) {
+    public static void resolve(NsdServiceInfo service) {
 
         NsdManager.ResolveListener mResolveListener = new NsdManager.ResolveListener() {
 
             @Override
             public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                // Called when the resolve fails. Use the error code to debug.
                 Log.e(DISCOVERY_TAG, "Resolve failed: ");
                 switch (errorCode) {
                     case FAILURE_ALREADY_ACTIVE:
@@ -163,25 +217,11 @@ public class Discovery {
             @Override
             public void onServiceResolved(NsdServiceInfo serviceInfo) {
                 Log.d(DISCOVERY_TAG, "Resolve Succeeded.");
-
-                /*
-                if (serviceInfo.getServiceName().equals(SERVICE_NAME)) {
-                    Log.d(tag, "Same IP.");
-                    return;
-                }
-                */
-
-                /*
-                int port = serviceInfo.getPort();
-                InetAddress host = serviceInfo.getHost();
-
-                //Log.d(DISCOVERY_TAG, host.getHostAddress() + ":" + port);
-                Log.d(DISCOVERY_TAG, serviceInfo.toString());
-                */
-                Store.getOnlyInstance().addHost(serviceInfo);
+                Share.getOnlyInstance().addHost(serviceInfo);
             }
         };
 
+        // This call launches the previously defined (mResolveListener) listener
         mNsdManager.resolveService(service, mResolveListener);
     }
 }

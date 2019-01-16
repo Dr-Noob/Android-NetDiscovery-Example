@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="register_ok">Register service started successfully</string>
+    <string name="register_ko">Register service failed: Already registered</string>
+    <string name="discover_ok">Discover service started successfully</string>
+    <string name="discover_ko">Discover service failed: Already discovering</string>
+    <string name="un_register_ok">Register service stopped successfully</string>
+    <string name="un_register_ko">Register service can\'t be stopped: Has not been started</string>
+    <string name="un_discovery_ok">Discovery service stopped successfully</string>
+    <string name="un_discovery_ko">Discovery service can\'t be stopped: Has not been started</string>
+</resources>

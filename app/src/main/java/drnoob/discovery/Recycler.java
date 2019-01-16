@@ -16,16 +16,16 @@ public class Recycler extends Activity {
         setContentView(R.layout.activity_recycler);
         mRecyclerView = findViewById(R.id.recycler_view);
 
-        // use this setting to improve performance if you know that changes
-        // in content do not change the layout size of the RecyclerView
+        // improve performance if changes in content do
+        // not change the layout size of the RecyclerView
         mRecyclerView.setHasFixedSize(true);
 
-        // use a linear layout manager
+
         mLayoutManager = new LinearLayoutManager(this);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        // specify an adapter (see also next example)
-        mAdapter = new MyAdapter(Store.getOnlyInstance().getHosts());
+
+        mAdapter = new DiscoveryAdapter(Share.getOnlyInstance().getHosts());
         mRecyclerView.setAdapter(mAdapter);
     }
 }

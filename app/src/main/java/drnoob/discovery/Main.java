@@ -8,48 +8,92 @@ import android.widget.Button;
 import android.widget.Toast;
 
 public class Main extends Activity {
-    private Button btnRegister;
-    private Button btnDiscover;
-    private Button btnRecycler;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Button btnStartRegister;
+        Button btnStopRegister;
+        Button btnStartDiscover;
+        Button btnStopDiscover;
+        Button btnRecycler;
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        this.btnRegister = findViewById(R.id.btnRegister);
-        this.btnDiscover = findViewById(R.id.btnDiscover);
-        this.btnRecycler = findViewById(R.id.btnRecycler);
+        btnStartRegister = findViewById(R.id.btnStartRegister);
+        btnStopRegister  = findViewById(R.id.btnStopRegister);
+        btnStartDiscover = findViewById(R.id.btnStartDiscover);
+        btnStopDiscover  = findViewById(R.id.btnStopDiscover);
+        btnRecycler      = findViewById(R.id.btnRecycler);
 
-        this.btnRegister.setOnClickListener(new View.OnClickListener() {
+        btnStartRegister.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Discovery di = Discovery.getOnlyInstance(getApplicationContext());
-                if(di.register()) {
-                    Toast t = Toast.makeText(getApplicationContext(), "Register succeeded", Toast.LENGTH_SHORT);
-                    t.show();
-                }
+                String msg;
+
+                if(di.registerServiceUp())
+                    msg = getString(R.string.register_ko);
                 else {
-                    Toast t = Toast.makeText(getApplicationContext(), "Register failed", Toast.LENGTH_SHORT);
-                    t.show();
+                    msg = getString(R.string.register_ok);
+                    di.register();
                 }
+
+                Toast t = Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT);
+                t.show();
             }
         });
 
-        this.btnDiscover.setOnClickListener(new View.OnClickListener() {
+        btnStopRegister.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Discovery di = Discovery.getOnlyInstance(getApplicationContext());
-                if(di.discover()) {
-                    Toast t = Toast.makeText(getApplicationContext(), "Discover succeeded", Toast.LENGTH_SHORT);
-                    t.show();
+                String msg;
+
+                if(di.registerServiceUp()) {
+                    msg = getString(R.string.un_register_ok);
+                    di.unregister();
                 }
-                else {
-                    Toast t = Toast.makeText(getApplicationContext(), "Discover failed", Toast.LENGTH_SHORT);
-                    t.show();
-                }
+                else
+                    msg = getString(R.string.un_register_ko);
+
+                Toast t = Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT);
+                t.show();
             }
         });
 
-        this.btnRecycler.setOnClickListener(new View.OnClickListener() {
+        btnStartDiscover.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Discovery di = Discovery.getOnlyInstance(getApplicationContext());
+                String msg;
+
+                if(di.discoverServiceUp())
+                    msg = getString(R.string.discover_ko);
+                else {
+                    msg = getString(R.string.discover_ok);
+                    di.startDiscover();
+                }
+
+                Toast t = Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT);
+                t.show();
+            }
+        });
+
+        btnStopDiscover.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Discovery di = Discovery.getOnlyInstance(getApplicationContext());
+                String msg;
+
+                if(di.discoverServiceUp()) {
+                    msg = getString(R.string.un_discovery_ok);
+                    di.stopDiscover();
+                }
+                else
+                    msg = getString(R.string.un_discovery_ko);
+
+                Toast t = Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT);
+                t.show();
+            }
+        });
+
+        btnRecycler.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Intent myIntent = new Intent(Main.this, Recycler.class);
                 startActivity(myIntent);

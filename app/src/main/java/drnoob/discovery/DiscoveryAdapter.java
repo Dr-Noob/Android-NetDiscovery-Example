@@ -7,9 +7,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.util.LinkedList;
 
-public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
+public class DiscoveryAdapter extends RecyclerView.Adapter<DiscoveryAdapter.MyViewHolder> {
     private LinkedList<NsdServiceInfo> hosts;
 
     // Provide a reference to the views for each data item
@@ -27,13 +29,13 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
-    public MyAdapter(LinkedList<NsdServiceInfo> h) {
+    public DiscoveryAdapter(LinkedList<NsdServiceInfo> h) {
         hosts = h;
     }
 
     // Create new views (invoked by the layout manager)
     @Override
-    public MyAdapter.MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public DiscoveryAdapter.MyViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         // create a new view
         View v = LayoutInflater.from(parent.getContext()).inflate( R.layout.card, parent, false);
         MyViewHolder vh = new MyViewHolder(v);

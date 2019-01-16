@@ -4,15 +4,15 @@ import android.net.nsd.NsdServiceInfo;
 
 import java.util.LinkedList;
 
-public class Store {
-    private static Store onlyInstance = new Store();
+public class Share {
+    private static Share onlyInstance = new Share();
     private static LinkedList<NsdServiceInfo> hosts;
 
-    private Store() {
+    private Share() {
         hosts = new LinkedList<>();
     }
 
-    public static Store getOnlyInstance() { return onlyInstance; }
+    public static Share getOnlyInstance() { return onlyInstance; }
 
     public static void addHost(NsdServiceInfo h) { hosts.add(h); }
 
